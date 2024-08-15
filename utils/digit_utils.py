@@ -3,6 +3,11 @@ from models.digit import Digit
 
 class DigitUtils:
 
-    @staticmethod
-    def make_reference_digit(digit_value, digit_map):
-        return Digit(digit_value, digit_map)
+    def __init__(self):
+        self.empty_digit = self.make_digit("-1", "")
+
+    def get_empty_digit(self):
+        return self.make_digit("-1", "")
+
+    def make_digit(self, digit_value: int, digit_box: str):
+        return Digit(digit_value, digit_box)

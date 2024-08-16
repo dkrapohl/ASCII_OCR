@@ -21,7 +21,7 @@ class TestDigitHandler:
 
     def test_get_reference_digit_not_found_by_val(self):
         four = self.handler.get_digit_by_value("66")
-        assert four.value == '-1'
+        assert four.value == '?'
 
     def test_get_reference_digit_by_ascii(self):
         matrix_for_four = [[' ', ' ', ' '], ['|', '_', '|'], [' ', ' ', '|']]

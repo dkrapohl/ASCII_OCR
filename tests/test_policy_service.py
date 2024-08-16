@@ -1,10 +1,17 @@
+import os
+import random
 from services.policy_service import PolicyService
 
 
 class TestPolicyHandler:
     handler = PolicyService()
-    invalid_policy = handler.load_policies_from_file('./resources/invalid_policy.txt')[0]
-    valid_policy = handler.load_policies_from_file('./resources/valid_policy.txt')[0]
+    invalid_policy = handler.read_ascii_policies_from_file('./resources/invalid_policy.txt')[0]
+    valid_policy = handler.read_ascii_policies_from_file('./resources/valid_policy.txt')[0]
+    mixed_status_policy_collection = handler.read_ascii_policies_from_file('./resources/mixed_status_policies.txt')
+    policy_write_test_directory = './tmp/'
+
+    def safe_remove_test_file(self, filepath: str):
+        os.remove(filepath) if os.path.exists(filepath) else None
 
     # Testing policy file loading
     def test_load_policy_file(self):
@@ -34,3 +41,61 @@ class TestPolicyHandler:
 
     def test_invalid_policy_checksum(self):
         assert self.invalid_policy.get_checksum == 3
+
+    # Testing write of policies to a file
+    def test_write_four_policies(self):
+        """
+        In this test we generate four random policy numbers, write them to a file as ascii,
+            read them back in, transform them back to a policy number, and check that
+            they match the random policy numbers we generated
+        :return:
+        """
+        policy_collection = []
+        test_write_path = "{0}{1}".format(self.policy_write_test_directory, "twfp.txt")
+        self.safe_remove_test_file(test_write_path)
+
+        # generate four random policy numbers and add them to our output test collection
+        for x in range(4):
+            policy_collection.append(str(random.randint(100000000, 999999999)))
+
+        # write the policies to the ascii output file
+        self.handler.write_ascii_policies_to_file(test_write_path, policy_collection)
+
+        # read the output file back in and see if we wrote correctly
+        # read the multi-line file back and check all the policy numbers
+        written_policies = self.handler.read_ascii_policies_from_file(test_write_path)
+        for policy in written_policies:
+            assert policy.policy_number in policy_collection  # see if they're in the original collection
+
+    def test_corrupt_policy_file(self):
+        """
+        Test a corrupt file with the last 5 digits unreadable by our standards
+        :return:
+        """
+        invalid_policy = self.handler.read_ascii_policies_from_file('./resources/corrupt_policy.txt')[0]
+        assert invalid_policy.policy_number == "8362?????"
+
+    def test_write_policy_file_with_determination(self):
+        """
+        Read in a series of five policies and write their determination (if they're valid and legible)
+        The correct answers:
+            policy 1 is valid and legible
+            policy 2 is illegible (we can't parse the digits from ascii so validity has no meaning)
+            policy 3 is valid and legible
+            policy 4 is legible but invalid (the numbers don't pass our checksum algorithm)
+
+        :return:
+        """
+        # clean up existing outputs
+        test_write_path = "{0}{1}".format(self.policy_write_test_directory, "twpfwd.txt")
+        self.safe_remove_test_file(test_write_path)
+
+        # write out our parsed policy with ILL or ERR or nothing after the policy #
+        self.handler.write_numeric_policies_to_file_with_validity(test_write_path,
+                                                                  self.mixed_status_policy_collection)
+        parsed_policies = self.handler.read_policy_with_determination_from_file(test_write_path)
+        assert len(parsed_policies) == 4    # be sure we got all four policies
+        assert "ERR" not in parsed_policies[0] and "ILL" not in parsed_policies[0]
+        assert "ILL" in parsed_policies[1]
+        assert "ERR" not in parsed_policies[2] and "ILL" not in parsed_policies[2]
+        assert "ERR" in parsed_policies[3]

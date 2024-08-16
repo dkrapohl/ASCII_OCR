@@ -16,8 +16,12 @@ class Policy:
         # as above, it's the sum of digit*array_index over the 9-digit policy_number
         accumulator = 0
         for index, item in enumerate(reversed(digits_collection)):
-#            reversed_index = len(digits_collection) - 1 - index     # py collections reversed don't reverse the index
-            accumulator += ((index + 1) * int(item.value))
+            if item.value.isdigit():
+                accumulator += ((index + 1) * int(item.value))
+            else:   # the item was not parsed correctly so the hash is invalid
+                self.policy_hash = -1
+                break
+
         self.policy_hash = accumulator
 
     def __str__(self):

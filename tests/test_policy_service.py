@@ -5,7 +5,8 @@ from services.policy_service import PolicyService
 
 class TestPolicyHandler:
     handler = PolicyService()
-    invalid_policy = handler.read_ascii_policies_from_file('./resources/invalid_policy.txt')[0]
+    invalid_policy = handler.read_ascii_policies_from_file('./resources/invalid_policy.txt',
+                                                           auto_correct=False)[0]
     valid_policy = handler.read_ascii_policies_from_file('./resources/valid_policy.txt')[0]
     mixed_status_policy_collection = handler.read_ascii_policies_from_file('./resources/mixed_status_policies.txt')
     policy_write_test_directory = './tmp/'
@@ -41,10 +42,16 @@ class TestPolicyHandler:
         test_write_path = "{0}{1}".format(self.policy_write_test_directory, "twfp.txt")
         self.safe_remove_test_file(test_write_path)
 
-        # generate four random policy numbers and add them to our output test collection
-        for x in range(4):
-            policy_collection.append(str(random.randint(100000000, 999999999)))
+        # ------------------------------------------------------------------------------
+        # NOTE: introduction of ECC to the data writer means we don't necessarily get back
+        #   what we write so generating random policy numbers doesn't work for testing.
 
+        # generate four random policy numbers and add them to our output test collection
+        #for x in range(4):
+        #    policy_collection.append(str(random.randint(100000000, 999999999)))
+        # -------------------------------------------------------------------------------
+
+        policy_collection = ['087508451', '565385117', '980356662', '374707170']
         # write the policies to the ascii output file
         self.handler.write_ascii_policies_to_file(test_write_path, policy_collection)
 
@@ -69,7 +76,7 @@ class TestPolicyHandler:
             policy 1 is valid and legible
             policy 2 is illegible (we can't parse the digits from ascii so validity has no meaning)
             policy 3 is valid and legible
-            policy 4 is legible but invalid (the numbers don't pass our checksum algorithm)
+            policy 4 is legible but invalid until our ECC fixes it from 635037860 to 639037860
             policy 5 is legible but invalid and has more than 1 potential alternatives with valid checksums
 
         :return:
@@ -86,5 +93,5 @@ class TestPolicyHandler:
         assert "ERR" not in parsed_policies[0] and "ILL" not in parsed_policies[0]
         assert "ILL" in parsed_policies[1]
         assert "ERR" not in parsed_policies[2] and "ILL" not in parsed_policies[2]
-        assert "ERR" in parsed_policies[3]
+        assert "639037860\n" in parsed_policies[3]
         assert "AMB" in parsed_policies[4]

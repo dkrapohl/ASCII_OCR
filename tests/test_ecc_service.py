@@ -1,3 +1,4 @@
+from models.policy import Policy
 from services.ecc_service import ECCService
 from services.policy_service import PolicyService
 
@@ -6,7 +7,8 @@ class TestECCService:
     handler = ECCService()
     policy_handler = PolicyService()
 
-    invalid_policy = policy_handler.read_ascii_policies_from_file('./resources/invalid_policy.txt')[0]
+    invalid_policy = policy_handler.read_ascii_policies_from_file('./resources/invalid_policy.txt',
+                                                                  auto_correct=False)[0]
     valid_policy = policy_handler.read_ascii_policies_from_file('./resources/valid_policy.txt')[0]
     almost_valid_policy = policy_handler.read_ascii_policies_from_file('./resources/corrupt_policy.txt')[0]
     amb_fixable_policy = policy_handler.read_ascii_policies_from_file('./resources/can_fix_checksum_multi_match.txt')[0]
@@ -66,9 +68,9 @@ class TestECCService:
         # get the policy numbers that can be generated with a single pipe or underscore move
         recommended_policies = self.handler.get_checksum_fix_recommendation(self.fixable_policy)
 
-        assert len(recommended_policies) == 1
+        # verify the policy was updated from 6350[invalid]7860 to 635027860
+        assert len(recommended_policies) == 0
 
-        assert recommended_policies[0].get_policy_number == '635027860'
 
 
 

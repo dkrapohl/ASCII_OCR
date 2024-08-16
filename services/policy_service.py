@@ -29,7 +29,7 @@ class PolicyService:
                 policy_list.append(line)
         return policy_list
 
-    def read_ascii_policies_from_file(self, policy_file_path: str):
+    def read_ascii_policies_from_file(self, policy_file_path: str, auto_correct: bool = True):
         """
         This reads the ASCII multi-line input file. The file is expected to be, for each policy,
             3 lines of 27 characters (3x27 matrix) composed of 9 represented policy digits, which
@@ -51,9 +51,29 @@ class PolicyService:
                         # if line offset % 3 = 0 then it's the end of a policy line so parse it
                         if line_relative_offset % 3 == 0:
                             current_policy.append(line.replace("\n", ""))
+                            # parsed policy is the set of ascii digits we get when we parse it from the file
+                            # created_policy is a Policy object we create from the parsed so we can get checksum
+                            # trans_fixed_policy is the created_policy with transcription errors fixed if possible
+                            # checksum_fixed policy is the trans_fixed_policy corrected for checksum errors of possible
                             parsed_policy = self.parse_ascii_policy(current_policy)  # parse the policy from the lines
-                            policy_list.append(
-                                Policy(parsed_policy))  # add the parsed policy to the list
+                            created_policy = Policy(parsed_policy)
+
+                            # if we're to automatically correct incoming data, do ECC here
+                            if auto_correct:
+                                # at this point we'll try to correct any transcription issues if the policy is invalid
+                                if not created_policy.policy_number_is_valid:
+                                    trans_fixed_policy = self.ecc_service.get_checksum_fix_recommendation(created_policy)
+                                    if len(trans_fixed_policy) == 1:   # we have a single fix candidate
+                                        created_policy = trans_fixed_policy[0]
+
+                                # now we'll try to correct checksum issues if the policy is invalid
+                                if not created_policy.policy_number_is_valid:
+                                    checksum_fixed_policy = self.ecc_service.get_checksum_fix_recommendation(created_policy)
+                                    if len(checksum_fixed_policy) == 1:   # we have a single fix candidate
+                                        created_policy = checksum_fixed_policy[0]
+
+                            # add the fixed policy to the policy list
+                            policy_list.append(created_policy)  # add the parsed policy to the list
                         else:
                             current_policy.append(line.replace("\n", ""))  # remove LF
                             line_relative_offset += 1  # increment our offset to the next line

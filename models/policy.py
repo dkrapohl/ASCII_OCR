@@ -1,3 +1,4 @@
+from services.ecc_service import ECCService
 
 class Policy:
     """
@@ -7,22 +8,13 @@ class Policy:
             so: (n*1) + (n*2) + ... (n*9)
     """
     policy_number = ""
+    ecc_service = ECCService()
 
     def __init__(self, digits_collection):
-        self.digits = digits_collection
-        self.policy_number = "".join(itm.value for itm in digits_collection)
-
-        # make the hash for this policy number
-        # as above, it's the sum of digit*array_index over the 9-digit policy_number
-        accumulator = 0
-        for index, item in enumerate(reversed(digits_collection)):
-            if item.value.isdigit():
-                accumulator += ((index + 1) * int(item.value))
-            else:   # the item was not parsed correctly so the hash is invalid
-                self.policy_hash = -1
-                break
-
-        self.policy_hash = accumulator
+        if digits_collection is not None:
+            self.digits = digits_collection
+            self.policy_number = "".join(itm.value for itm in digits_collection)
+            self.policy_hash = self.ecc_service.calculate_policy_hash(digits_collection)
 
     def __str__(self):
         return f"{self.policy_number}"
@@ -41,7 +33,7 @@ class Policy:
     @property
     def get_checksum(self):
         """The checksum is the hash of the string modulo 11"""
-        return self.policy_hash % 11
+        return self.ecc_service.calculate_policy_checksum(self.policy_hash)
 
     @property
     def policy_number_is_valid(self):

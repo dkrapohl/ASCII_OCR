@@ -1,9 +1,8 @@
 import os, types
-from utils.digit_utils import DigitUtils
-
+from models.digit import Digit
 
 class DigitService:
-    digit_utils = DigitUtils()
+    empty_digit_matrix = [[' ', ' ', ' '], ['|', '_', '|'], [' ', ' ', '|']]
     reference_digits = {}
 
     def load_reference_digits(self, reference_digits_path: str = '../resources/reference_digits'):
@@ -28,7 +27,8 @@ class DigitService:
                                 list(line.replace("\n", "")))  # top-left is first index, bottom right is last
                     map_key = filename.replace(".txt","")       # the key is the filename - .txt
                     # use the digit service to create a digit object and add it to the reference dict
-                    self.reference_digits[map_key] = self.digit_utils.make_digit(map_key, digit_box)
+                    self.reference_digits[map_key] = Digit(map_key, digit_box)
+                    print(self.reference_digits[map_key].digit_map)
                 except IOError:
                     print("Something went wrong when attempting to read file.")
 
@@ -52,7 +52,8 @@ class DigitService:
         digit_match = (digit.digit_matrix == digit_box for digit in self.reference_digits)
         # if the list enumeration resulted in to match Python 3.x+ returns a Generator.
         # If we see that we need to change it to a default Digit object
-        return digit_match if not isinstance(digit_match, types.GeneratorType) else self.digit_utils.get_empty_digit()
+        return digit_match if not isinstance(digit_match, types.GeneratorType) \
+            else Digit("?", digit_box)
 
     def get_digit_by_value(self, digit_value: str):
         """
@@ -61,4 +62,4 @@ class DigitService:
         :return: a Digit object of either the matching digit or a default digit ("?")
         """
         digit_match = self.reference_digits.get(digit_value)
-        return digit_match if digit_match else self.digit_utils.get_empty_digit()
+        return digit_match if digit_match else Digit('?', self.empty_digit_matrix)

@@ -1,13 +1,13 @@
 import os
 from services.digit_service import DigitService
-from utils.digit_utils import DigitUtils
+from services.ecc_service import ECCService
 from models.policy import Policy
 from models.digit import Digit
 
 
 class PolicyService:
     digit_service = DigitService()
-    digit_utils = DigitUtils()
+    ecc_service = ECCService()
 
     def __init__(self):
         # ensure we've bootstrapped our reference digits into our digit service
@@ -44,21 +44,22 @@ class PolicyService:
         try:
             with open(policy_file_path, 'r') as policy_file:
                 # need to read 3 lines at a time to get a policy number
-                line_relative_offset = 1                # line offset tracker to know every third line
-                current_policy = []                     # working copy of the 3x27 matrix policy
-                for line in policy_file.readlines():    # loop through file line-by-line
-                    if line.strip():    # skip empty lines but if empty, reinit the line offset
+                line_relative_offset = 1  # line offset tracker to know every third line
+                current_policy = []  # working copy of the 3x27 matrix policy
+                for line in policy_file.readlines():  # loop through file line-by-line
+                    if line.strip():  # skip empty lines but if empty, reinit the line offset
                         # if line offset % 3 = 0 then it's the end of a policy line so parse it
                         if line_relative_offset % 3 == 0:
                             current_policy.append(line.replace("\n", ""))
                             parsed_policy = self.parse_ascii_policy(current_policy)  # parse the policy from the lines
-                            policy_list.append(Policy(parsed_policy))  # add the parsed policy to the list
+                            policy_list.append(
+                                Policy(parsed_policy))  # add the parsed policy to the list
                         else:
-                            current_policy.append(line.replace("\n", ""))   # remove LF
-                            line_relative_offset += 1   # increment our offset to the next line
+                            current_policy.append(line.replace("\n", ""))  # remove LF
+                            line_relative_offset += 1  # increment our offset to the next line
                     else:
-                        line_relative_offset = 1    # after a blank line, reset our line pointer
-                        current_policy = []         # also re-init our working policy collection
+                        line_relative_offset = 1  # after a blank line, reset our line pointer
+                        current_policy = []  # also re-init our working policy collection
             return policy_list
         except IOError:
             print("Something went wrong when attempting to read file.")
@@ -92,7 +93,10 @@ class PolicyService:
                 parseable_flag = " ILL" if "?" in policy.policy_number else ""
                 # if the policy wasn't valid, append ERR to the end of the policy number
                 valid_flag = "" if policy.policy_number_is_valid else " ERR"
-                policy_file.write("{0}{1}{2}\n".format(policy.policy_number, parseable_flag, valid_flag))
+                # if the policy can't be resolved to one single alternative valid checksum, write "AMB"
+                resolvable_flag = "" if len(self.ecc_service.get_checksum_fix_recommendation(policy))<2 else " AMB"
+                policy_file.write("{0}{1}{2}{3}\n".format(policy.policy_number, parseable_flag,
+                                                          valid_flag, resolvable_flag))
 
     def parse_ascii_policy(self, current_policy):
         """
@@ -117,7 +121,7 @@ class PolicyService:
                     digit_box.append(list(digit_area[digit_offsets:digit_offsets + 3]))
                 parsed_digit = self.digit_service.get_digit_by_ascii_matrix(digit_box)
             except:  # if we mis-parse we'll just return an empty digit object we can work with later
-                parsed_digit = self.digit_utils.get_empty_digit()
+                parsed_digit = Digit('?',digit_box)
                 continue
 
             digit_collection.append(parsed_digit)
@@ -138,12 +142,25 @@ class PolicyService:
         policy_ascii = ""
         # go through each single digit 3 times. append each ascii digit line to the equivalent
         #   line for the next digit. So we're building one output line at a time from the digits
-        for digit_row in range(3):      # loop 3X. we'll pivot the collection from 9X3 to 3X9
-            for digits_col, digit in enumerate(digit_collection):   # loop all digits
-                digit_pivot.append(digit.digit_matrix[digit_row])   # append this row x col to the line
+        for digit_row in range(3):  # loop 3X. we'll pivot the collection from 9X3 to 3X9
+            for digits_col, digit in enumerate(digit_collection):  # loop all digits
+                digit_pivot.append(digit.digit_matrix[digit_row])  # append this row x col to the line
                 # this flattens the list containing this digit's current ascii row content and appends
                 policy_ascii += ''.join(str(element) for element in digit.digit_matrix[digit_row])
-            policy_ascii += '\n'    # at this point we've moved to the next output line so add LF
+            policy_ascii += '\n'  # at this point we've moved to the next output line so add LF
 
         policy_ascii += '\n'
         return policy_ascii
+
+    def policy_number_to_policy_object(self, policy_number):
+        """
+        This takes a numeric policy and builds a Policy object from it
+        :param policy_number:
+        :return: A Policy object with all its digits
+        """
+        digit_collection = []
+        # look up the digits in the reference digits and build a Digits object collection of them
+        for i, v in enumerate(policy_number):
+            digit_collection.append(self.digit_service.get_digit_by_value(v))
+
+        return Policy(digit_collection)

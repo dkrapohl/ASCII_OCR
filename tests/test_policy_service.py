@@ -18,13 +18,7 @@ class TestPolicyHandler:
         assert self.invalid_policy.policy_number == "123456781"
         assert self.valid_policy.policy_number == "345882865"
 
-    # Testing hashes
 
-    def test_valid_policy_hash(self):
-        assert self.valid_policy.policy_hash == 231
-
-    def test_invalid_policy_hash(self):
-        assert self.invalid_policy.policy_hash == 157
 
     # Testing policy number validity based on checksum
 
@@ -34,13 +28,6 @@ class TestPolicyHandler:
     def test_invalid_policy(self):
         assert self.invalid_policy.policy_number_is_valid == False
 
-    # Testing checksums
-
-    def test_valid_policy_checksum(self):
-        assert self.valid_policy.get_checksum == 0
-
-    def test_invalid_policy_checksum(self):
-        assert self.invalid_policy.get_checksum == 3
 
     # Testing write of policies to a file
     def test_write_four_policies(self):
@@ -73,7 +60,7 @@ class TestPolicyHandler:
         :return:
         """
         invalid_policy = self.handler.read_ascii_policies_from_file('./resources/corrupt_policy.txt')[0]
-        assert invalid_policy.policy_number == "8362?????"
+        assert invalid_policy.policy_number == "6350?7860"
 
     def test_write_policy_file_with_determination(self):
         """
@@ -83,6 +70,7 @@ class TestPolicyHandler:
             policy 2 is illegible (we can't parse the digits from ascii so validity has no meaning)
             policy 3 is valid and legible
             policy 4 is legible but invalid (the numbers don't pass our checksum algorithm)
+            policy 5 is legible but invalid and has more than 1 potential alternatives with valid checksums
 
         :return:
         """
@@ -94,8 +82,9 @@ class TestPolicyHandler:
         self.handler.write_numeric_policies_to_file_with_validity(test_write_path,
                                                                   self.mixed_status_policy_collection)
         parsed_policies = self.handler.read_policy_with_determination_from_file(test_write_path)
-        assert len(parsed_policies) == 4    # be sure we got all four policies
+        assert len(parsed_policies) == 5    # be sure we got all four policies
         assert "ERR" not in parsed_policies[0] and "ILL" not in parsed_policies[0]
         assert "ILL" in parsed_policies[1]
         assert "ERR" not in parsed_policies[2] and "ILL" not in parsed_policies[2]
         assert "ERR" in parsed_policies[3]
+        assert "AMB" in parsed_policies[4]

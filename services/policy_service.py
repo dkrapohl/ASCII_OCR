@@ -42,7 +42,7 @@ class PolicyService:
 
         # Ensuring that if something goes wrong during read, that the program exits gracefully.
         try:
-            with open(policy_file_path, 'r') as policy_file:
+            with open(os.path.join(os.getcwd(), policy_file_path), 'r') as policy_file:
                 # need to read 3 lines at a time to get a policy number
                 line_relative_offset = 1  # line offset tracker to know every third line
                 current_policy = []  # working copy of the 3x27 matrix policy
@@ -80,6 +80,7 @@ class PolicyService:
                     else:
                         line_relative_offset = 1  # after a blank line, reset our line pointer
                         current_policy = []  # also re-init our working policy collection
+            print("-- Found {0} policies in input file".format(len(policy_list)))
             return policy_list
         except IOError:
             print("Something went wrong when attempting to read file.")
@@ -92,11 +93,12 @@ class PolicyService:
         :param policy_collection: Collection of plaintext string policy numbers, like 123456789
         :return: N/A
         """
-        with open(policy_file_path, 'w') as policy_file:
+        with open(os.path.join(os.getcwd(), policy_file_path), 'w') as policy_file:
             current_policy = []
             for policy in policy_collection:
                 digits_for_policy = self.policy_number_to_ascii(policy)
                 policy_file.write(digits_for_policy)
+        print("-- Wrote {0} policies to file".format(len(policy_collection)))
 
     def write_numeric_policies_to_file_with_validity(self, policy_file_path: str, policy_collection):
         """
@@ -109,14 +111,15 @@ class PolicyService:
         """
         with open(policy_file_path, 'w') as policy_file:
             for policy in policy_collection:
-                # if the policy wasn't parseable, append ILL to the end of what we have
-                parseable_flag = " ILL" if "?" in policy.policy_number else ""
+                output_flag = ""    # start with the flag empty
                 # if the policy wasn't valid, append ERR to the end of the policy number
-                valid_flag = "" if policy.policy_number_is_valid else " ERR"
+                output_flag = " ERR" if not policy.policy_number_is_valid else output_flag
+                # if the policy wasn't parseable, append ILL to the end of what we have
+                output_flag = " ILL" if "?" in policy.policy_number else output_flag
                 # if the policy can't be resolved to one single alternative valid checksum, write "AMB"
-                resolvable_flag = "" if len(self.ecc_service.get_checksum_fix_recommendation(policy))<2 else " AMB"
-                policy_file.write("{0}{1}{2}{3}\n".format(policy.policy_number, parseable_flag,
-                                                          valid_flag, resolvable_flag))
+                output_flag = output_flag if len(self.ecc_service.get_checksum_fix_recommendation(policy))<2 else " AMB"
+                policy_file.write("{0}{1}\n".format(policy.policy_number,output_flag))
+        print("-- Wrote {0} policies to file".format(len(policy_collection)))
 
     def parse_ascii_policy(self, current_policy):
         """
@@ -147,7 +150,7 @@ class PolicyService:
             digit_collection.append(parsed_digit)
         return digit_collection
 
-    def policy_number_to_ascii(self, policy_number):
+    def policy_number_to_ascii(self, policy_number: str):
         """
         This takes a numeric policy and builds the ascii art equivalent into a string
         :param policy_number:
@@ -156,8 +159,12 @@ class PolicyService:
         digit_collection = []
         digit_pivot = []
         # look up the digits in the reference digits and build a Digits object collection of them
-        for i, v in enumerate(policy_number):
-            digit_collection.append(self.digit_service.get_digit_by_value(v))
+        if isinstance(policy_number, Policy):
+            for i, v in enumerate(policy_number.policy_number):
+                digit_collection.append(self.digit_service.get_digit_by_value(v))
+        else:
+            for i, v in enumerate(policy_number):
+                digit_collection.append(self.digit_service.get_digit_by_value(v))
 
         policy_ascii = ""
         # go through each single digit 3 times. append each ascii digit line to the equivalent

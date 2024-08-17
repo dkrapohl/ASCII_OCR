@@ -1,4 +1,4 @@
-from models.policy import Policy
+import os
 from services.ecc_service import ECCService
 from services.policy_service import PolicyService
 
@@ -7,12 +7,13 @@ class TestECCService:
     handler = ECCService()
     policy_handler = PolicyService()
 
-    invalid_policy = policy_handler.read_ascii_policies_from_file('./resources/invalid_policy.txt',
+    os.chdir(os.path.dirname(__file__))
+    invalid_policy = policy_handler.read_ascii_policies_from_file('resources/invalid_policy.txt',
                                                                   auto_correct=False)[0]
-    valid_policy = policy_handler.read_ascii_policies_from_file('./resources/valid_policy.txt')[0]
-    almost_valid_policy = policy_handler.read_ascii_policies_from_file('./resources/corrupt_policy.txt')[0]
-    amb_fixable_policy = policy_handler.read_ascii_policies_from_file('./resources/can_fix_checksum_multi_match.txt')[0]
-    fixable_policy = policy_handler.read_ascii_policies_from_file('./resources/can_fix_checksum_single_match.txt')[0]
+    valid_policy = policy_handler.read_ascii_policies_from_file('resources/valid_policy.txt')[0]
+    almost_valid_policy = policy_handler.read_ascii_policies_from_file('resources/corrupt_policy.txt')[0]
+    amb_fixable_policy = policy_handler.read_ascii_policies_from_file('resources/can_fix_checksum_multi_match.txt')[0]
+    fixable_policy = policy_handler.read_ascii_policies_from_file('resources/can_fix_checksum_single_match.txt')[0]
 
 
     # Testing hashes

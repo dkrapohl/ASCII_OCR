@@ -5,7 +5,7 @@ class DigitService:
     empty_digit_matrix = [[' ', ' ', ' '], ['|', '_', '|'], [' ', ' ', '|']]
     reference_digits = {}
 
-    def load_reference_digits(self, reference_digits_path: str = '../resources/reference_digits'):
+    def load_reference_digits(self, reference_digits_path: str = 'resources/reference_digits'):
         """
         This reads the reference digits from resources and puts them into a reference collection.
             These are the ASCII representation we expect for each digit in the ASCII policy file.
@@ -13,14 +13,16 @@ class DigitService:
         :param reference_digits_path:
         :return:
         """
+        # construct the ref digits file path
+        file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", reference_digits_path))
         # iterate over files in the reference digit directory into the reference map
-        for filename in os.listdir(os.path.abspath(reference_digits_path)):
+        for filename in os.listdir(os.path.abspath(file_path)):
             if filename.endswith('.txt'):
                 digit_box = []  # 3x3 matrix from the incoming file for the digit
 
                 # Ensuring that if something goes wrong during read, that the program exits gracefully.
                 try:
-                    with open(os.path.join(reference_digits_path, filename), 'r') as current_digit:
+                    with open(os.path.join(file_path, filename), 'r') as current_digit:
                         # Reads each line of the file, and creates one Digit from the file
                         for line in current_digit.readlines():
                             digit_box.append(
@@ -28,7 +30,6 @@ class DigitService:
                     map_key = filename.replace(".txt","")       # the key is the filename - .txt
                     # use the digit service to create a digit object and add it to the reference dict
                     self.reference_digits[map_key] = Digit(map_key, digit_box)
-                    print(self.reference_digits[map_key].digit_map)
                 except IOError:
                     print("Something went wrong when attempting to read file.")
 

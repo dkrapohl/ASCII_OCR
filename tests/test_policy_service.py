@@ -5,13 +5,16 @@ from services.policy_service import PolicyService
 
 class TestPolicyHandler:
     handler = PolicyService()
-    invalid_policy = handler.read_ascii_policies_from_file('./resources/invalid_policy.txt',
+
+    os.chdir(os.path.dirname(__file__))
+    invalid_policy = handler.read_ascii_policies_from_file('resources/invalid_policy.txt',
                                                            auto_correct=False)[0]
-    valid_policy = handler.read_ascii_policies_from_file('./resources/valid_policy.txt')[0]
-    mixed_status_policy_collection = handler.read_ascii_policies_from_file('./resources/mixed_status_policies.txt')
-    mixed_status_policy_collection_no_ecc = handler.read_ascii_policies_from_file('./resources/mixed_status_policies.txt',
+    valid_policy = handler.read_ascii_policies_from_file('resources/valid_policy.txt')[0]
+    mixed_status_policy_collection = handler.read_ascii_policies_from_file('resources/mixed_status_policies.txt')
+    mixed_status_policy_collection_no_ecc = handler.read_ascii_policies_from_file('resources/mixed_status_policies.txt',
                                                                            auto_correct=False)
-    policy_write_test_directory = './tmp/'
+    corrupt_policy = handler.read_ascii_policies_from_file('resources/corrupt_policy.txt')[0]
+    policy_write_test_directory = 'tmp/'
 
     def safe_remove_test_file(self, filepath: str):
         os.remove(filepath) if os.path.exists(filepath) else None
@@ -68,8 +71,7 @@ class TestPolicyHandler:
         Test a corrupt file with the last 5 digits unreadable by our standards
         :return:
         """
-        invalid_policy = self.handler.read_ascii_policies_from_file('./resources/corrupt_policy.txt')[0]
-        assert invalid_policy.policy_number == "6350?7860"
+        assert self.corrupt_policy.policy_number == "6350?7860"
 
     def test_write_policy_file_with_determination(self):
         """

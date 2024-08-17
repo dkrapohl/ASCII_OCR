@@ -6,11 +6,13 @@ This project will assist in OCR of documents containing a list of policy numbers
 
 # Testing
     All unit tests are under the tests directory. Tests exist for all required cases in test_user_stories.py
+    Run all tests with:  python -m pytest
 
 # Usage
     python -m main.py path_to_input_file, path_to_output_file
     where path_to_input_file is a full path to the input file including directory
         path_to_output_file is the full path to the desired output file including directory
+    Example: python -m main --in_path=tests/resources/mixed_status_policies.txt --out_path=tests/tmp/sample_main_output.txt
 
 # Algorithms
     This solution uses the specified checksum algorithm rendered in latex ASCII:
@@ -33,7 +35,6 @@ This project will assist in OCR of documents containing a list of policy numbers
         - each digit 3 lines by 3 columns, so 27 columns per ASCII digit
         - multiple policy numbers per file with an empty line between each number
         - only the following characters are valid (without quotes): " ", "|", "_"
-
 
 # Limitations
     1. There is no logging in this solution

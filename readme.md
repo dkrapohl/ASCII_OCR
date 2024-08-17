@@ -15,6 +15,7 @@ This project will assist in OCR of documents containing a list of policy numbers
     1. There is no logging in this solution
     2. No metrics are collected regarding counts of valid/invalid policies for auditing
     3. Exception management is limited
+    4. A github action exists that will run tests on check in of a branch v#.#.# and should be extended for CI/CD
 
 # Dependencies
     Ensure your console path is in the project root (/kin_ocr)

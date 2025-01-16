@@ -1,5 +1,5 @@
 # kin_ocr
-OCR project for kin insurance
+Solution of manual ASCII art parsing and generation for OCR
 
 # Purpose
 This project will assist in OCR of documents containing a list of policy numbers rendered in a specific ASCII art format. The documents scanned may have transcription errors that need to be corrected.
@@ -18,17 +18,17 @@ This project will assist in OCR of documents containing a list of policy numbers
     4. A github action exists that will run tests on check in of a branch v#.#.# and should be extended for CI/CD
 
 # Dependencies
-    Ensure your console path is in the project root (/kin_ocr)
+    Ensure your console path is in the project root (/ascii_ocr)
     Dependency management is through pip and venv. To set up the environment run:
     pip install -r depends\requirements.txt
 
 # Testing
-    Ensure your console path is in the project root (/kin_ocr)
+    Ensure your console path is in the project root (/ascii_ocr)
     All unit tests are under the tests directory. Tests exist for all required cases in test_user_stories.py
     Run all tests with:  python -m pytest
 
 # Usage
-    Ensure your console path is in the project root (/kin_ocr)
+    Ensure your console path is in the project root (/ascii_ocr)
     python -m main.py path_to_input_file, path_to_output_file
     where path_to_input_file is a full path to the input file including directory
         path_to_output_file is the full path to the desired output file including directory
